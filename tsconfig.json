@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "CommonJS", // Используйте CommonJS для Jest
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "outDir": "./dist",
+      "types": ["jest", "node"], // Добавьте "jest" в типы
+      "moduleResolution": "node" // Убедитесь, что это значение установлено
+    },
+    "include": ["src/**/*", "tests/**/*"],
+    "exclude": ["node_modules"]
+  }
