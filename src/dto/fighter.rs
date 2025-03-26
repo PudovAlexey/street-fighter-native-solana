@@ -6,5 +6,9 @@ pub struct FighterDto {
    pub gender: String,
    pub health: u32,
    pub attack: u32,
-   pub bump: u8
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Debug, Clone)]
+pub struct RefillHealthDto {
+   pub health: u32,
 }

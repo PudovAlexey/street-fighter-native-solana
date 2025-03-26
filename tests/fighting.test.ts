@@ -24,7 +24,6 @@ async function CreateFighter(keypair: Keypair, name: string, gender: string, att
 
     const programData = new Fighter().serializeInitializeFighterSchema({
         name: cockData.name,
-        bump,
         gender: cockData.gender,
         attack: cockData.attack,
     })
@@ -67,7 +66,7 @@ async function CreateFighting(keypair: Keypair, name: string, room_pin: string) 
     };
 
     const fightingData = new Fighting().serializeInitializeFightingSchema(fightingMockConfig);
-    const [pda, bump] = await PublicKey.findProgramAddressSync([
+    const [pda] = await PublicKey.findProgramAddressSync([
         Buffer.from("init_fighting"),
         Buffer.from(fightingMockConfig.name, 'utf-8'),
         keypair.publicKey.toBuffer()
@@ -119,7 +118,7 @@ async function addFighterHandler(keypair: Keypair, fighting: PublicKey, fighter:
             {
                 pubkey: fighter,
                 isSigner: false,
-                isWritable: false,
+                isWritable: true,
             },
         ],
         programId: PROGRAM_ADDRESS,
@@ -137,19 +136,20 @@ async function addFighterHandler(keypair: Keypair, fighting: PublicKey, fighter:
 
 describe('fighting instructions', () => {
     let keypair = Keypair.generate();
+    let receiverKeypair = Keypair.generate();
     let fighting = PublicKey.default;
     let spiderManPubkey: PublicKey = PublicKey.default;
     let catWomanPubKey: PublicKey = PublicKey.default;
 
     beforeAll(async () => {
-        {
+        
             const airdropSignature = await connection.requestAirdrop(keypair.publicKey, 2 * 1e9); // Запрос 2 SOL
             await connection.confirmTransaction(airdropSignature);
             
             fighting = await CreateFighting(keypair, 'owner', '1234');
             spiderManPubkey = await CreateFighter(keypair, 'Spider man', 'male', 10);
             catWomanPubKey = await CreateFighter(keypair, 'Cat woman', 'female', 20);
-        }
+        
     })
 
     test('intitalize fighting', async () => {
@@ -170,5 +170,9 @@ describe('fighting instructions', () => {
         await addFighterHandler(keypair, fighting, spiderManPubkey);
         await addFighterHandler(keypair, fighting, catWomanPubKey);
 
+    });
+
+    test("bite_fighter", async () => {
+        
     })
 });

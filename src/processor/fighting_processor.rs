@@ -1,5 +1,6 @@
 use borsh::BorshSerialize;
 use solana_program::{
+    clock::Clock,
     account_info::{next_account_info, AccountInfo}, borsh1::try_from_slice_unchecked, entrypoint::ProgramResult, msg, program::invoke_signed, program_error::ProgramError, pubkey::Pubkey, rent::Rent, system_instruction, sysvar::Sysvar};
 
 use crate::{dto::fighting::InitializeFightingDto, state::fighter::Fighter};
@@ -75,14 +76,16 @@ pub fn process_initialize_fighting(
     let mut account_data =
         try_from_slice_unchecked::<InitializeFighting>(&pda_account.data.borrow()).unwrap();
     msg!("borrowed account data");
-
+    
+    let current_time = Clock::get()?.unix_timestamp;
 
     account_data.name = name;
     account_data.room_pin = room_pin;
     account_data.creator = Pubkey::default();
-    account_data.fighters = (0, 0);
-    account_data.winner = 0;
-    account_data.start_time = 0;
+    account_data.fighters = (Pubkey::default(), Pubkey::default());
+    account_data.winner = Pubkey::default();
+    account_data.turn = 0;
+    account_data.start_time = current_time;
     account_data.end_time = 0;
     account_data.round = 0;
 
@@ -106,22 +109,26 @@ pub fn add_fighter(
     
     msg!("trying to get fighter");
 
-    let fighter =
+    let mut fighter =
         try_from_slice_unchecked::<Fighter>(&fighter_pda.data.borrow()).unwrap();
 
     let mut fighting_data = try_from_slice_unchecked::<InitializeFighting>(&fighting_pda.data.borrow())?;
 
-    if fighting_data.fighters.0 == 0 {
+    if fighting_data.fighters.0 == Pubkey::default() {
         msg!("trying to add first fighter");
-        fighting_data.fighters.0 = fighter.bump;
-    } else if fighting_data.fighters.1 == 0 {
+        fighting_data.fighters.0 = fighter_pda.key.to_owned();
+        fighter.is_on_fight = true;
+    } else if fighting_data.fighters.1 == Pubkey::default() {
         msg!("trying to add second fighter");
-        fighting_data.fighters.1 = fighter.bump;
+        fighting_data.fighters.1 = fighter_pda.key.to_owned();
+        fighting_data.round = 1;
+        fighter.is_on_fight = true;
     } else {
         return Err(ProgramError::InvalidAccountData);
     }
 
     fighting_data.serialize(&mut &mut fighting_pda.data.borrow_mut()[..])?;
+    fighter.serialize(&mut &mut fighter_pda.data.borrow_mut()[..])?;
     
     Ok(())
 }

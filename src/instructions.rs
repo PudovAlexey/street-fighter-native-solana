@@ -1,11 +1,13 @@
 use borsh::BorshDeserialize;
-use crate::dto::{fighter::FighterDto, fighting::InitializeFightingDto};
+use crate::dto::{fighter::{FighterDto, RefillHealthDto}, fighting::InitializeFightingDto};
 use solana_program::program_error::ProgramError;
 
 pub enum FighterInstructions {
     InitFighting(InitializeFightingDto),
     InitFighter(FighterDto),
-    AddFighter
+    AddFighter,
+    BiteFighter,
+    RefillHealth(RefillHealthDto)
     // InitFighter {name: String, gender: String, health: u32, atack: u32},
     // DeleteFighter {name: String},
     // BiteFighter {from_name: String, to_name: String},
@@ -32,7 +34,6 @@ impl FighterInstructions {
 
                 Ok(Self::InitFighter(FighterDto {
                     name: fighter.name,
-                    bump: fighter.bump,
                     gender: fighter.gender,
                     health: fighter.health,
                     attack: fighter.attack,
@@ -40,6 +41,17 @@ impl FighterInstructions {
             },
             2 => {
                 Ok(Self::AddFighter)
+            },
+            3 => {
+                Ok(Self::BiteFighter)
+            }
+            4 => {
+                let refill_health = RefillHealthDto::try_from_slice(rest)?;
+
+                Ok(Self::RefillHealth(RefillHealthDto {
+                    health: refill_health.health,
+                }
+                ))
             }
             _ => Err(ProgramError::InvalidInstructionData),
             // 0 => {

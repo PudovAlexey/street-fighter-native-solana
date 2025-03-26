@@ -3,13 +3,16 @@ import { PublicKey } from '@solana/web3.js';
 
 class Fighter {
 
+  borshBiteFighterSchema = borsh.struct([
+    borsh.u8('variant')
+  ])
+
     borshInitializeFighterSchema = borsh.struct([
       borsh.u8('variant'),
       borsh.str('name'),
       borsh.str('gender'),
       borsh.u32('health'),
       borsh.u32('attack'),
-      borsh.u8('bump'),
     ]);
 
     borshAddFighterSchema = borsh.struct([
@@ -25,7 +28,6 @@ class Fighter {
 
     serializeInitializeFighterSchema(args: {
       name: string,
-      bump: number, 
       gender: string,
       attack: number,
     }): Buffer {
@@ -36,7 +38,6 @@ class Fighter {
             gender: args.gender,
             health: 100,
             attack: args.attack,
-            bump: args.bump,
           };
 
           this.borshInitializeFighterSchema.encode({ ...initialValue, variant: 1 }, buffer);
@@ -46,6 +47,13 @@ class Fighter {
           console.error("Serialization error:", e);
           return Buffer.alloc(0);
         }
+      }
+
+      serializeBorshBiteFighter() {
+        const buffer = Buffer.alloc(1000);
+        this.borshBiteFighterSchema.encode({ variant: 3 }, buffer);
+
+        return buffer.subarray(0, this.borshBiteFighterSchema.getSpan(buffer));
       }
 }
 

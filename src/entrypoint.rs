@@ -6,7 +6,7 @@ use solana_program::{
     account_info::AccountInfo,
     entrypoint::ProgramResult,
 };
-use crate::{instructions::FighterInstructions, processor::{fighter_processor::process_initialize_fighter, fighting_processor::{add_fighter, process_initialize_fighting}}};
+use crate::{instructions::FighterInstructions, processor::{fighter_processor::{process_bite_fighter, process_initialize_fighter, process_refill_health}, fighting_processor::{add_fighter, process_initialize_fighting}}};
 
 entrypoint!(process_instruction);
 
@@ -26,6 +26,12 @@ pub fn process_instruction(
         }
         FighterInstructions::AddFighter => {
             add_fighter(program_id, accounts)?
+        }
+        FighterInstructions::BiteFighter => {
+            process_bite_fighter(program_id, accounts)?
+        }
+        FighterInstructions::RefillHealth(health_data) => {
+            process_refill_health(program_id, accounts, health_data)?
         }
         // FighterInstructions::InitFighter { name, gender,health, atack,  } => {
         //     process_initialize_fighter(program_id, accounts, Figther {
