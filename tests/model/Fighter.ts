@@ -15,8 +15,22 @@ class Fighter {
       borsh.u32('attack'),
     ]);
 
+    borshDesereliaizeSchema = borsh.struct([
+      borsh.bool('is_on_fight'),
+      borsh.publicKey('owner'),
+      borsh.str('name'),
+      borsh.str('gender'),
+      borsh.u32('health'),
+      borsh.u32('attack'),
+    ])
+
     borshAddFighterSchema = borsh.struct([
       borsh.u8('variant'),
+    ])
+
+    borshRefillHealthSchema = borsh.struct([
+      borsh.u8('variant'),
+      borsh.u32('health'),
     ])
 
     serializeAddFighter() {
@@ -54,6 +68,19 @@ class Fighter {
         this.borshBiteFighterSchema.encode({ variant: 3 }, buffer);
 
         return buffer.subarray(0, this.borshBiteFighterSchema.getSpan(buffer));
+      }
+
+      serializeBorshRefillHealFighter(args: {
+        heal: number,
+      }) {
+        const buffer = Buffer.alloc(1000);
+        this.borshBiteFighterSchema.encode({ ...args ,variant: 4 }, buffer);
+
+        return buffer.subarray(0, this.borshBiteFighterSchema.getSpan(buffer));
+      }
+
+      deserializeFighter(buffer: Buffer | null) {
+        return this.borshDesereliaizeSchema.decode(buffer);
       }
 }
 

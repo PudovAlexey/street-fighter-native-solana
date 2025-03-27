@@ -1,7 +1,7 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use solana_program::pubkey::Pubkey;
 
-use crate::dto::fighter::{FighterDto, RefillHealthDto};
+use crate::dto::fighter::FighterDto;
 
 #[derive(BorshDeserialize, BorshSerialize, Debug, Clone)]
 pub struct Fighter {

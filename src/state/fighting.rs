@@ -10,7 +10,7 @@ pub struct InitializeFighting {
     pub winner: Pubkey,
     pub turn: u8,
     pub start_time: i64,
-    pub end_time: u64,
+    pub end_time: i64,
     pub round: u8,
 }
 

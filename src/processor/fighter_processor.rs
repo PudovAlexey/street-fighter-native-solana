@@ -1,18 +1,9 @@
 use borsh::BorshSerialize;
 use solana_program::{
-    account_info::{next_account_info, AccountInfo},
-    borsh1::try_from_slice_unchecked,
-    entrypoint::ProgramResult,
-    msg,
-    program::{invoke, invoke_signed},
-    program_error::ProgramError,
-    pubkey::Pubkey,
-    rent::Rent,
-    system_instruction,
-    sysvar::Sysvar,
+    account_info::{next_account_info, AccountInfo}, borsh1::try_from_slice_unchecked, clock::Clock, entrypoint::ProgramResult, msg, program::{invoke, invoke_signed}, program_error::ProgramError, pubkey::Pubkey, rent::Rent, system_instruction, sysvar::Sysvar
 };
 
-use crate::{dto::fighter::{FighterDto, RefillHealthDto}, helpers::{refill_health, validate_participants}, state::{fighter::Fighter, fighting::InitializeFighting}};
+use crate::{dto::fighter::{FighterDto, RefillHealthDto}, error::StreetFighterError, helpers::{refill_health, validate_participants}, state::{fighter::Fighter, fighting::InitializeFighting}};
 
 pub fn process_initialize_fighter(
     program_id: &Pubkey,
@@ -211,10 +202,17 @@ pub fn process_bite_fighter(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pr
             return Err(ProgramError::InvalidAccountData);
         }
 
+    if fighting_account.winner != Pubkey::default() {
+        return Err(StreetFighterError::TheFightIsOverError.into());
+    }
+
     if from_fighter.attack > to_fighter.health {
         if fighting_account.round == 3 {
+            let current_time = Clock::get()?.unix_timestamp;
+
             fighting_account.winner = from_fighter_pda_account.key.to_owned();
-            // fighting_account.round += 1;
+            fighting_account.end_time = current_time;
+            fighting_account.round += 1;
             to_fighter.health = 100;
         } else {
             fighting_account.round += 1;
@@ -225,6 +223,10 @@ pub fn process_bite_fighter(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pr
     }
 
     fighting_account.turn = 1 - fighting_account.turn; // Меняем очередь хода
+
+    to_fighter.serialize(&mut &mut to_fighter_pda_account.data.borrow_mut()[..])?;
+
+    fighting_account.serialize(&mut &mut fighting_pda_account.data.borrow_mut()[..])?;
 
     Ok(())
 }

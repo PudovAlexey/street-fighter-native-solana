@@ -131,48 +131,96 @@ async function addFighterHandler(keypair: Keypair, fighting: PublicKey, fighter:
 
 
     console.log(transactionResult, 'added fighter into battle');
+
+    return fighter;
+}
+
+async function biteFighterHandler(keypair: Keypair, fighting: PublicKey, fighter1: PublicKey, fighter2: PublicKey) {
+    const fiteFighter = new Fighter().serializeBorshBiteFighter();
+
+    const instructionData = new TransactionInstruction({
+        keys: [
+            {
+                pubkey: fighting,
+                isSigner: false,
+                isWritable: true,
+            },
+            {
+                pubkey: fighter1,
+                isSigner: false,
+                isWritable: true,
+            },
+            {
+                pubkey: fighter2,
+                isSigner: false,
+                isWritable: true,
+            },
+        ],
+        programId: PROGRAM_ADDRESS,
+        data: fiteFighter
+    });
+
+    const transaction = new Transaction().add(instructionData);
+    
+
+    const transactionResult = await sendAndConfirmTransaction(connection, transaction, [keypair]);
+
+    return fighting;
 }
 
 
 describe('fighting instructions', () => {
     let keypair = Keypair.generate();
     let receiverKeypair = Keypair.generate();
-    let fighting = PublicKey.default;
-    let spiderManPubkey: PublicKey = PublicKey.default;
-    let catWomanPubKey: PublicKey = PublicKey.default;
+    // let fighting = PublicKey.default;
+    // let spiderManPubkey: PublicKey = PublicKey.default;
+    // let catWomanPubKey: PublicKey = PublicKey.default;
 
     beforeAll(async () => {
         
             const airdropSignature = await connection.requestAirdrop(keypair.publicKey, 2 * 1e9); // Запрос 2 SOL
             await connection.confirmTransaction(airdropSignature);
-            
-            fighting = await CreateFighting(keypair, 'owner', '1234');
-            spiderManPubkey = await CreateFighter(keypair, 'Spider man', 'male', 10);
-            catWomanPubKey = await CreateFighter(keypair, 'Cat woman', 'female', 20);
         
     })
 
-    test('intitalize fighting', async () => {
+    test('creating fighting', async () => {
 
-       const pda = await CreateFighting(keypair, 'test-fighting', '1234')
+       const pda = await CreateFighting(keypair, 'fighter-test', '1234')
 
        console.log(pda)
 
     });
 
-    test('initialize fighter', async () => {
+    test('creating fighter', async () => {
         const pokemon = await CreateFighter(keypair, 'Pokemon', 'male', 10);
 
         console.log(pokemon)
     })
 
-    test("add fighters into battle", async () => {
-        await addFighterHandler(keypair, fighting, spiderManPubkey);
-        await addFighterHandler(keypair, fighting, catWomanPubKey);
+    test("simulate fight", async () => {
+        const fighting = await CreateFighting(keypair, 'test-fighting', '1234');
+        const spiderManPubkey = await CreateFighter(keypair, 'Spider man', 'male', 40);
+        const catWomanPubKey = await CreateFighter(keypair, 'Cat woman', 'female', 20);
+        const spiderMan = await addFighterHandler(keypair, fighting, spiderManPubkey);
+        const catWoman =  await addFighterHandler(keypair, fighting, catWomanPubKey);
+
+        await biteFighterHandler(keypair, fighting, spiderMan, catWoman) // Spider man bite Cat woman - 60;
+        await biteFighterHandler(keypair, fighting, catWoman, spiderMan);
+        await biteFighterHandler(keypair, fighting, spiderMan, catWoman) // Spider man bite Cat woman - 20;
+        await biteFighterHandler(keypair, fighting, catWoman, spiderMan)
+        await biteFighterHandler(keypair, fighting, spiderMan, catWoman) // Spider man bite Cat woman - 60;
+
+        const accountInfo = await connection.getAccountInfo(fighting);
+
+        const deserealizedData = new Fighting().deserializeFightingSchema((accountInfo as any).data);
 
     });
 
-    test("bite_fighter", async () => {
+    // test("bite_fighter", async () => {
         
+    // })
+
+    test("refill_health", async () => {
+
     })
 });
